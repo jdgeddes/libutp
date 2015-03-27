@@ -321,7 +321,7 @@ int read_utp_context(utp_context *ctx) {
                 utp_issue_deferred_acks(ctx);
                 break;
             } else {
-                error("recv on %d: %s", udpfd, strerror(errno));
+                warning("recv on %d: %s", udpfd, strerror(errno));
                 return -1;
             }
         }
@@ -416,13 +416,12 @@ int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struc
             if(exceptfds) FD_CLR(i, exceptfds);
 
             read_utp_context(ctx);
-        } else {
-            if((readfds && FD_ISSET(i, readfds)) || 
-               (writefds && FD_ISSET(i, writefds)) || 
-               (exceptfds && FD_ISSET(i, exceptfds)))
-            {
-                ret++;
-            }
+        } else if(readfds && FD_ISSET(i, readfds)) {
+            ret++;
+        } else if(writefds && FD_ISSET(i, writefds)) {
+            ret++;
+        } else if(exceptfds && FD_ISSET(i, exceptfds)) {
+            ret++;
         }
     }
 
