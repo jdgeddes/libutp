@@ -38,8 +38,8 @@ ucat: ucat.o libutp.so
 ucat-static: ucat.o libutp.a
 	$(CXX) $(CXXFLAGS) -o ucat-static ucat.o libutp.a $(LDFLAGS)
 
-libutp_preload.so: utp_preload.o libutp.so
-	$(CXX) $(CXXFLAGS) -o libutp_preload.so -shared $(OBJS)
+libutp_preload.so: libutp.so
+	$(CC) $(CFLAGS) -fPIC utp_preload.c -o libutp_preload.so -shared -L. -lutp $(LDFLAGS)
 
 clean:
 	rm -f *.o libutp.so libutp.a ucat ucat-static libutp_preload.so
