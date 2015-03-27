@@ -130,6 +130,8 @@ void utplog(log_level level, const char *funcname, const char *fmt, ...) {
 static void init() __attribute__((constructor));
 
 void init() {
+    info("starting UTP preload");
+
     /* get original function calls */
     SETSYM_OR_FAIL(orig_socket, "socket");
     SETSYM_OR_FAIL(orig_connect, "connect");
@@ -197,7 +199,7 @@ uint64 utp_sendto_cb(utp_callback_arguments *a) {
     utp_context *ctx = a->context;
     utp_context_data *data = utp_context_get_userdata(ctx);
     if(!data) {
-        error("could not get data for context %p", ctx);
+        warning("could not get data for context %p", ctx);
         return -1;
     }
 
@@ -269,12 +271,12 @@ uint64 utp_on_accept_cb(utp_callback_arguments *a) {
 
     utp_context_data *data = utp_context_get_userdata(ctx);
     if(!data) {
-        error("context %p had no data", ctx);
+        warning("context %p had no data", ctx);
     }
 
     int udpfd = data->udpfd;
     if(!udpfd) {
-        error("no UDP socket for context %p", ctx);
+        warning("no UDP socket for context %p", ctx);
     }
 
     g_queue_push_tail(data->incoming_utp_sockets, s);
@@ -484,7 +486,7 @@ int socket(int domain, int type, int protocol) {
 
     int on = 1;
     if(setsockopt(udpfd, SOL_IP, IP_RECVERR, &on, sizeof(on)) != 0) {
-        error("Could not set sockopt on %d", udpfd);
+        warning("Could not set sockopt on %d", udpfd);
     }
 
 
@@ -507,7 +509,7 @@ int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
 
     int on = 1;
     if(setsockopt(udpfd, SOL_IP, IP_RECVERR, &on, sizeof(on)) != 0) {
-        error("Could not set sockopt on %d", udpfd);
+        warning("Could not set sockopt on %d", udpfd);
         return -1;
     }
 
@@ -573,7 +575,7 @@ int connect(int sockfd, const struct sockaddr *address, socklen_t address_len) {
 
     utp_context_data *data = utp_context_get_userdata(ctx);
     if(!data) {
-        error("no data for context %p on TCP socket %d", ctx, sockfd);
+        warning("no data for context %p on TCP socket %d", ctx, sockfd);
         return -1;
     }
 
@@ -584,12 +586,12 @@ int connect(int sockfd, const struct sockaddr *address, socklen_t address_len) {
     hints.ai_protocol = IPPROTO_UDP;
 
     if(getaddrinfo("0.0.0.0", NULL, &hints, &res) != 0) {
-        error("getaddrinfo: %s", strerror(errno));
+        warning("getaddrinfo: %s", strerror(errno));
         return -1;
     }
 
     if(orig_bind(data->udpfd, res->ai_addr, res->ai_addrlen) != 0) {
-        error("bind: %s", strerror(errno));
+        warning("bind: %s", strerror(errno));
         return -1;
     }
 
@@ -656,7 +658,7 @@ ssize_t recv(int sockfd, void *buf, size_t len, int flags) {
 
     int length = MIN(sdata->readbuf->len, len);
     if(!length) {
-        error("No data in recv buf for socket %d", sockfd);
+        warning("No data in recv buf for socket %d", sockfd);
         return 0;
     }
 
