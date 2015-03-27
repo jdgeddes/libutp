@@ -3,6 +3,7 @@
 *.so
 *.swp
 *.swo
+*.log
 ucat
 ucat-static
 tags
