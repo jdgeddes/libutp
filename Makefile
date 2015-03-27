@@ -1,5 +1,5 @@
 OBJS     = utp_internal.o utp_utils.o utp_hash.o utp_callbacks.o utp_api.o utp_packedsockaddr.o
-CFLAGS   = -Wall -DPOSIX -g -fno-exceptions
+CFLAGS   = -Wall -DPOSIX -g -fno-exceptions `pkg-config --cflags glib-2.0`
 CXXFLAGS = $(CFLAGS) -fPIC -fno-rtti
 CC       = gcc
 CXX      = g++
@@ -22,7 +22,9 @@ ifeq ($(strip $(lrt)),0)
   LDFLAGS += -lrt
 endif
 
-all: libutp.so libutp.a ucat ucat-static
+LDFLAGS += `pkg-config --libs glib-2.0`
+
+all: libutp.so libutp.a ucat ucat-static libutp_preload.so
 
 libutp.so: $(OBJS)
 	$(CXX) $(CXXFLAGS) -o libutp.so -shared $(OBJS)
@@ -36,8 +38,11 @@ ucat: ucat.o libutp.so
 ucat-static: ucat.o libutp.a
 	$(CXX) $(CXXFLAGS) -o ucat-static ucat.o libutp.a $(LDFLAGS)
 
+libutp_preload.so: utp_preload.o libutp.so
+	$(CXX) $(CXXFLAGS) -o libutp_preload.so -shared $(OBJS)
+
 clean:
-	rm -f *.o libutp.so libutp.a ucat ucat-static
+	rm -f *.o libutp.so libutp.a ucat ucat-static libutp_preload.so
 
 tags: $(shell ls *.cpp *.h)
 	rm -f tags
